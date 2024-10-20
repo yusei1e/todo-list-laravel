@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      args:
+        user: app
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: laravel
+    container_name: laravel-app
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+      - node_modules:/path/to/node_modules
+    networks:
+      - localhost
+  db:
+    image: mysql:8.0
+    container_name: laravel-db
+    restart: unless-stopped
+    tty: true
+    environment:
+      MYSQL_DATABASE: laravel
+      MYSQL_ROOT_PASSWORD: 'root'
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    ports:
+        -   3305:3306
+    volumes:
+      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - localhost
+  nginx:
+    image: nginx:alpine
+    container_name: laravel-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - localhost
+networks:
+  localhost:
+    driver: bridge
+volumes:
+    node_modules:
+        driver: local
+        driver_opts:
+            type: none
+            o: bind
+            device: ./local/path/to/node_modules
